@@ -1,21 +1,17 @@
-# Sabau Sabau, Elvi Mihai
+all: estandar
 
-INPUT = source.cpp
-OUTPUT = output
-OPTS = g++
+run: estandar
+	./difuminador media.bmp	
 
-all:
-	${OPTS} ${INPUT} -o ${OUTPUT}
+no_optimizado: source.cpp
+	g++ -Wall -O0 source.cpp -o difuminador
 
+estandar: source.cpp
+	g++ -Wall -O1 source.cpp -o difuminador
 
-clear: 
-	rm ${OUTPUT}
+optimizado: source.cpp
+	g++ -Wall -O3 source.cpp -o difuminador
 
-redo: 
-	rm ${OUTPUT} && ${OPTS} ${INPUT} -o ${OUTPUT}
-	
-mpirun:
-	mpirun -np 8 ./${OUTPUT}
+clean :
+	rm difuminador *shadow_*
 
-run:
-	./${OUTPUT}
