@@ -12,8 +12,8 @@ struct pix
 
 vector<pix> pixelArray;
 
-unsigned char Cabecera[54];
-int b = *(int *)&Cabecera[18]; //
+unsigned char Header[54];
+int b = *(int *)&Header[18]; //
 
 ifstream in;
 ofstream out, out1;
@@ -28,6 +28,7 @@ int main(int argc, char *argv[])
 
 		char infile[30];
 		strcpy(infile, argv[1]);
+
 		char outfile[30];
 		strcpy(outfile, shadow.c_str());
 
@@ -38,21 +39,21 @@ int main(int argc, char *argv[])
 			return 0;
 		}
 
-		in.read((char *)(&Cabecera), sizeof(Cabecera));
+		in.read((char *)(&Header), sizeof(Header));
 		out.open(outfile, ios::out | ios::binary);
-		out.write((char *)(&Cabecera), sizeof(Cabecera));
-		unsigned t0, t1;
+		out.write((char *)(&Header), sizeof(Header));
+		unsigned ttot0, ttot1, tcpu0, tcpu1;
 
 		int width;
-		memcpy(&width, &Cabecera[18], sizeof(width));
+		memcpy(&width, &Header[18], sizeof(width));
 		cout << width << endl;
 
 		int height;
-		memcpy(&height, &Cabecera[22], sizeof(height));
+		memcpy(&height, &Header[22], sizeof(height));
 		cout << height << endl;
 
 		int h = 0;
-		t0 = clock();
+		ttot0 = clock();
 
 		while (!in.eof())
 		{
@@ -63,6 +64,8 @@ int main(int argc, char *argv[])
 
 		int fila = 0;
 		int columna = 0;
+
+		tcpu0 = clock();
 
 		for (int i = 0; i <= h; i++)
 		{
@@ -135,10 +138,14 @@ int main(int argc, char *argv[])
 			out.write((char *)(&pixel), sizeof(pixel));
 		}
 
-        t1 = clock();
+		tcpu1 = clock();
+        ttot1 = clock();
 
-		double time = (double(t1 - t0) / CLOCKS_PER_SEC);
-		cout << "Tiempo total: " << time << endl;
+		double ttot = (double(ttot1 - ttot0) / CLOCKS_PER_SEC);
+		double tcpu = (double(tcpu1 - tcpu0) / CLOCKS_PER_SEC);
+
+		cout << "Tiempo total: " << ttot << endl;
+		cout << "Tiempo CPU: " << tcpu << endl;
 
 		in.close();
 		out.close();
@@ -146,6 +153,6 @@ int main(int argc, char *argv[])
 	else
 	{
 		cout << "ERROR: argumentos incorrectos." << endl;
-        cout << "USO: ./difuminador 'imagen.bmp'" << endl;
+        cout << "USO: ./gsh 'imagen.bmp'" << endl;
 	}
 }

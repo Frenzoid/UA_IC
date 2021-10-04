@@ -1,17 +1,17 @@
 all: estandar
 
 run: estandar
-	./difuminador media.bmp	
+	./gsh media.bmp	
 
 no_optimizado: source.cpp
-	g++ -Wall -O0 source.cpp -o difuminador
+	g++ -Wall -O0 source.cpp -o gsh
 
 estandar: source.cpp
-	g++ -Wall -O1 source.cpp -o difuminador
+	g++ -Wall -O1 source.cpp -o gsh
 
 optimizado: source.cpp
-	g++ -Wall -O3 source.cpp -o difuminador
+	g++ -Wall -O3 source.cpp -o gsh
 
 clean :
-	rm difuminador *shadow_*
+	rm gsh *shadow_*
 
