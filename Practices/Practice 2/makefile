@@ -1,17 +1,17 @@
 all: estandar
 
 run: estandar
-	./gsh media.bmp	
+	./vida
 
 no_optimizado: source.cpp
-	g++ -Wall -O0 source.cpp -o gsh
+	g++ -Wall -O0 source.cpp -o vida
 
 estandar: source.cpp
-	g++ -Wall -O1 source.cpp -o gsh
+	g++ -Wall -O1 source.cpp -o vida
 
 optimizado: source.cpp
-	g++ -Wall -O3 source.cpp -o gsh
+	g++ -Wall -O3 source.cpp -o vida
 
-clean :
-	rm gsh *shadow_*
+clean:
+	rm vida
 
