@@ -3,6 +3,7 @@
 #include <numeric>
 #include <chrono>
 #include <thread>
+#include <ctime>
 
 #define RED "\e[0;31m"
 #define CYN "\e[0;36m"
@@ -38,6 +39,10 @@ Cells tablero = {
  
 int numFilas = 10;
 int numCols = 20;
+
+unsigned start_time;
+unsigned end_time;
+double tottime;
  
 // ----------------------------------------------------------------------------
  
@@ -100,8 +105,11 @@ int main () {
         std::this_thread::sleep_for(std::chrono::milliseconds(700));
         printf("\033[2J");
         printf("\033[%d;%dH", 0, 0);
-        std::cout << "\nGeneración " << gen << ":\n" << "\r";
+        std::cout << "Tiempo: " << tottime << "ms \nGeneración " << gen << ":\n" << "\r";
         mostrarCeldas(tablero);
+        start_time = clock();
         updateCeldas(tablero);
+        end_time = clock();
+        tottime = double(end_time - start_time / CLOCKS_PER_SEC);
     }
 }
