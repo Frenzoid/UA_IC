@@ -1,0 +1,3 @@
+/home/frenzoid/Documents/UNI/UA_IC/Practices/Practice 3/fuentes/build/CMakeFiles/rebuild_cache.dir
+/home/frenzoid/Documents/UNI/UA_IC/Practices/Practice 3/fuentes/build/CMakeFiles/edit_cache.dir
+/home/frenzoid/Documents/UNI/UA_IC/Practices/Practice 3/fuentes/build/CMakeFiles/cv.dir
