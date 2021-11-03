@@ -13,7 +13,7 @@ int main()
  // usamos push_back para añadir cada elemento.
  for(int i=0;i<SIZE;i++)
  {
- a.push_back(i);
+    a.push_back(i);
  }
  double aTime = double(clock() - begin) / CLOCKS_PER_SEC;
  cout<<"Elapsed time: "<<aTime<<"s"<<endl;
@@ -23,10 +23,9 @@ int main()
  std::vector<int> b(SIZE);
  for(int i=0;i<SIZE;i++)
  {
- a[i] = i;
+    a[i] = i;
  }
  double bTime = double(clock() - begin) / CLOCKS_PER_SEC;
  cout<<"Elapsed time: "<<bTime<<"s"<<endl;
  cout<<"Gain: "<<aTime/bTime<<endl;
 }
-•

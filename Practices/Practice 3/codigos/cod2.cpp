@@ -21,21 +21,25 @@ int main()
  // orden: 1 4 7 2 5 8 3 6 9
  for(int i=0;i<SIZE;i++)
  {
- for(int j=0;j<SIZE;j++)
- a[j][i] = i+j;
+    for(int j=0;j<SIZE;j++)
+        a[j][i] = i+j;
  }
+ 
  double aTime = double(clock() - begin) / CLOCKS_PER_SEC;
  cout<<"Elapsed time: "<<aTime<<"s"<<endl;
+ 
  // B:
  begin = clock();
  int b[SIZE][SIZE];
+ 
  // si recorremos la matriz por filas, visitamos las celdas en el siguiente
  // orden: 1 2 3 4 5 6 7 8 9
  for(int i=0;i<SIZE;i++)
  {
- for(int j=0;j<SIZE;j++)
- b[i][j] = i+j;
+    for(int j=0;j<SIZE;j++)
+        b[i][j] = i+j;
  }
+ 
  double bTime = double(clock() - begin) / CLOCKS_PER_SEC;
  cout<<"Elapsed time: "<<bTime<<"s"<<endl;
  cout<<"Gain: "<<aTime/bTime<<endl;
