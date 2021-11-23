@@ -22,6 +22,8 @@ double CrossValidation::validate(uint k) const
 {
     double accuracy = 0.0;
     std::cout<<"Starting "<<this->getName()<<std::endl;
+
+    #pragma omp parallel for 
     for(int fold=0;fold<this->folds;fold++)
     {
         std::vector<TSample> train, test;

@@ -26,7 +26,7 @@ float euclidean(const TSample &a, const TSample &b)
     for(int i=0;i<a.image.rows*a.image.cols;i++)
     {
     	float diff = imageA[i] - imageB[i];
-        sum += diff * diff;
+      sum += diff * diff;
     }
     
     return std::sqrt(sum);
@@ -53,6 +53,7 @@ typedef struct KNNResult
     /// <param name="distance">The distance between the training sample and the test sample.</param>
     KNNResult(int label, float distance)
     {
+        #pragma omp single copyprivate(label, distance)
         this->label = label;
         this->distance = distance;
     };
@@ -101,6 +102,7 @@ typedef struct KNNResult
 std::map<int, int> histogram(const std::vector<KNNResult> &results, int k)
 {
     std::map<int, int> votes;
+    #pragma omp parallel for
     for(int i=0;i<k;i++)
     {
         votes[results[i].label]++;
@@ -141,6 +143,7 @@ int maxVotesLabel(std::map<int, int> histogram)
 int KNN::classify(const TSample &test) const
 {
     std::vector<KNNResult> results;
+    #pragma omp parallel for
     for(int i=0;i<this->train.size();i++)
     {
         results.push_back(KNNResult(test, this->train[i]));
@@ -162,6 +165,8 @@ int KNN::classify(const TSample &test) const
 double KNN::classifyAndEvaluate(const std::vector<TSample> &test, std::vector<int> &labels) const
 {
     int matches = 0;
+
+    #pragma omp parallel for
     for(int i=0;i<test.size();i++)
     {
         std::cout<<i<<"/"<<test.size()<<"\r"<<std::flush;

@@ -18,11 +18,12 @@ namespace knn
             /// </summary>
             /// <param name="train">The training samples.</param>
             /// <param name="k">The k neighbors to compute the classification.</param>
+            //
             KNN(const std::vector<TSample> &train, int k=1)
             {
             	for(int i=0;i<train.size();i++)
             		this->train.push_back(train[i]);
-            		
+
             	this->k = k;
             };
             
