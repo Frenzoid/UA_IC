@@ -102,6 +102,7 @@ typedef struct KNNResult
 std::map<int, int> histogram(const std::vector<KNNResult> &results, int k)
 {
     std::map<int, int> votes;
+    
     #pragma omp parallel for
     for(int i=0;i<k;i++)
     {
