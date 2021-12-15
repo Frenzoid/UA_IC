@@ -5,6 +5,7 @@
 
 #include <omp.h>
 
+#include <mpi.h>
 #include <cassert>
 #include <cmath>
 #include <string>
@@ -34,19 +35,26 @@ int fineTuning(uint minK, uint maxK, const std::vector<TSample> &dataset, uint f
     
     uint bestK = minK;
     double bestAccuracy = 0.0;
-    for(int k = minK; k <= maxK; k++)
+
+
+    for(uint k = minK; k <= maxK; k++)
     {
-        std::cout<<"Testing k "<<k<<std::endl;
-        double start = omp_get_wtime();
-        
-        double accuracy = crossValidation.validate(k);
-        std::cout<<"K: "<<k<<" Accuracy: "<<accuracy * 100<<"% completed in "<<omp_get_wtime() - start<<" seconds"<<std::endl;
+        MPI_Send(k, 1, MPI_UNSIGNED, k, 0, MPI_COMM_WORLD);
+    }
+
+
+    for(uint k = minK; k <= maxK; k++)
+    {
+
+        MPI_Recv(&accuracy, 1, MPI_UNSIGNED, k, 0, MPI_COMM_WORLD, &status);
+
         
         if(accuracy > bestAccuracy)
         {
             bestAccuracy = accuracy;
             bestK = k;
         }
+
     }
     
     return bestK;
@@ -92,29 +100,69 @@ bool loadDataset(std::vector<TSample> &train, std::vector<TSample> &test)
 /// <param name="argv">The arguments.</param>
 int main(int argc, char** argv) 
 {
-    // Load MNIST dataset.
-    double totalStart = omp_get_wtime();
-    std::vector<TSample> train;
-    std::vector<TSample> test;
-    if(!loadDataset(train, test))
+
+    int processor_rank, total_processors;
+    double start_time, end_time, sequential_time, parallel_time;
+
+    MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &total_processors);
+    MPI_Comm_rank(MPI_COMM_WORLD, &processor_rank);
+
+    MPI_Status status;
+
+    if (total_processors < 2)
     {
+        printf("Tiene que haber minimo 2 procesadores en uso.\n");
+        MPI_Finalize();
         return 0;
     }
-    
-    // Fine tune the KNN classifier with training data.
-    double start = omp_get_wtime();
-    int k = fineTuning(1, 10, std::vector<TSample>(train.begin(), train.begin() + 20000), 5);
-    std::cout<<"Best k: "<<k<<" found in "<<omp_get_wtime() - start<<" seconds"<<std::endl;
-    
-    // Test the classifier with testing data.
-    start = omp_get_wtime();
-    std::vector<int> labels;
-    KNN knn(train, k);
-    double accuracy = knn.classifyAndEvaluate(test, labels);
-    
-    std::cout<<"Test accuracy: "<<accuracy<<" completed in "<<omp_get_wtime() - start<<" seconds"<<std::endl;
-    
-    std::cout<<"Total elapsed time "<<omp_get_wtime() - totalStart<<" seconds"<<std::endl;
-    
-    return 1;
+
+    if (processor_rank == 0)
+    {
+        // Load MNIST dataset.
+        start_time = MPI_Wtime();
+
+        std::vector<TSample> train;
+        std::vector<TSample> test;
+
+        if(!loadDataset(train, test)) {
+            return 0;
+        }
+        
+        // Fine tune the KNN classifier with training data.
+        double start = omp_get_wtime();
+        int k = fineTuning(1, 10, std::vector<TSample>(train.begin(), train.begin() + 20000), 5);
+        std::cout<<"Best k: "<<k<<" found in "<<omp_get_wtime() - start<<" seconds"<<std::endl;
+        
+        // Test the classifier with testing data.
+        start = omp_get_wtime();
+        std::vector<int> labels;
+        KNN knn(train, k);
+        double accuracy = knn.classifyAndEvaluate(test, labels);
+
+        end_time = MPI_Wtime();
+        parallel_time = end_time - start_time;
+        
+        std::cout<<"Test accuracy: "<<accuracy<<" completed in "<<omp_get_wtime() - start<<" seconds"<<std::endl;
+        
+        std::cout<<"Total elapsed time "<< parallel_time <<" seconds"<<std::endl;
+        
+
+
+
+        return 1;
+    } else {
+
+
+        MPI_Recv(k, 1, MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD, &status);
+
+        std::cout<<"Testing k "<<k<<std::endl;
+        
+        double start = omp_get_wtime();
+        double accuracy = crossValidation.validate(k);
+        std::cout<<"K: "<<k<<" Accuracy: "<<accuracy * 100<<"% completed in "<<omp_get_wtime() - start<<" seconds"<<std::endl;
+
+        MPI_Send(&accuracy, 1, MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD);
+
+    }
 }
