@@ -26,37 +26,33 @@ using namespace crossValidation;
 /// <returns>
 /// The value of K that better performs in the cross validation.
 /// </returns>
-int fineTuning(uint minK, uint maxK, const std::vector<TSample> &dataset, uint folds)
+int fineTuning(uint minK, uint maxK, const std::vector<TSample> &dataset, uint folds, MPI_Status status)
 {
-    assert(minK >= 1 && maxK > minK);
-    
+    assert(minK >= 0 && maxK > minK);
+
     CrossValidation crossValidation = CrossValidation::NFold(dataset, folds);
-    std::cout<<"Starting search for best K parameter in range ["<<minK<<", "<<maxK<<"] using "<<crossValidation.getName()<<" with "<<dataset.size()<<" samples."<<std::endl;
-    
-    uint bestK = minK;
+    std::cout << "Starting search for best K parameter in range [" << minK << ", " << maxK << "] using " << crossValidation.getName() << " with " << dataset.size() << " samples." << std::endl;
+
+    int bestK = minK;
     double bestAccuracy = 0.0;
 
-
-    for(uint k = minK; k <= maxK; k++)
+    for (int k = minK; k <= maxK; k++)
     {
-        MPI_Send(k, 1, MPI_UNSIGNED, k, 0, MPI_COMM_WORLD);
+        MPI_Send(&k, 1, MPI_INT, k, 0, MPI_COMM_WORLD);
     }
 
-
-    for(uint k = minK; k <= maxK; k++)
+    for (uint k = minK; k <= maxK; k++)
     {
-
+        double accuracy;
         MPI_Recv(&accuracy, 1, MPI_UNSIGNED, k, 0, MPI_COMM_WORLD, &status);
 
-        
-        if(accuracy > bestAccuracy)
+        if (accuracy > bestAccuracy)
         {
             bestAccuracy = accuracy;
             bestK = k;
         }
-
     }
-    
+
     return bestK;
 }
 
@@ -73,23 +69,23 @@ bool loadDataset(std::vector<TSample> &train, std::vector<TSample> &test)
     // Load training data.
     std::string img_path = "train/train-images-idx3-ubyte";
     std::string label_path = "train/train-labels-idx1-ubyte";
-    if(!loadMnist(img_path.c_str(), label_path.c_str(), train))
+    if (!loadMnist(img_path.c_str(), label_path.c_str(), train))
     {
-        std::cout<<"The training data could not be read"<<std::endl;
-        
+        std::cout << "The training data could not be read" << std::endl;
+
         return false;
     }
-    
+
     // Load testing data.
     img_path = "test/t10k-images-idx3-ubyte";
     label_path = "test/t10k-labels-idx1-ubyte";
-    if(!loadMnist(img_path.c_str(), label_path.c_str(), test))
+    if (!loadMnist(img_path.c_str(), label_path.c_str(), test))
     {
-        std::cout<<"The test data could not be read"<<std::endl;
-        
+        std::cout << "The test data could not be read" << std::endl;
+
         return false;
     }
-    
+
     return true;
 }
 
@@ -98,7 +94,7 @@ bool loadDataset(std::vector<TSample> &train, std::vector<TSample> &test)
 /// </summary>
 /// <param name="argc">The number of arguments.</param>
 /// <param name="argv">The arguments.</param>
-int main(int argc, char** argv) 
+int main(int argc, char **argv)
 {
 
     int processor_rank, total_processors;
@@ -116,24 +112,23 @@ int main(int argc, char** argv)
         MPI_Finalize();
         return 0;
     }
+    std::vector<TSample> train;
+    std::vector<TSample> test;
 
+    if (!loadDataset(train, test))
+    {
+        return 0;
+    }
     if (processor_rank == 0)
     {
         // Load MNIST dataset.
         start_time = MPI_Wtime();
 
-        std::vector<TSample> train;
-        std::vector<TSample> test;
-
-        if(!loadDataset(train, test)) {
-            return 0;
-        }
-        
         // Fine tune the KNN classifier with training data.
         double start = omp_get_wtime();
-        int k = fineTuning(1, 10, std::vector<TSample>(train.begin(), train.begin() + 20000), 5);
-        std::cout<<"Best k: "<<k<<" found in "<<omp_get_wtime() - start<<" seconds"<<std::endl;
-        
+        int k = fineTuning(0, 3, std::vector<TSample>(train.begin(), train.begin() + 20000), 5, status);
+        std::cout << "Best k: " << k << " found in " << omp_get_wtime() - start << " seconds" << std::endl;
+
         // Test the classifier with testing data.
         start = omp_get_wtime();
         std::vector<int> labels;
@@ -142,27 +137,26 @@ int main(int argc, char** argv)
 
         end_time = MPI_Wtime();
         parallel_time = end_time - start_time;
-        
-        std::cout<<"Test accuracy: "<<accuracy<<" completed in "<<omp_get_wtime() - start<<" seconds"<<std::endl;
-        
-        std::cout<<"Total elapsed time "<< parallel_time <<" seconds"<<std::endl;
-        
 
+        std::cout << "Test accuracy: " << accuracy << " completed in " << omp_get_wtime() - start << " seconds" << std::endl;
 
+        std::cout << "Total elapsed time " << parallel_time << " seconds" << std::endl;
 
         return 1;
-    } else {
+    }
+    else
+    {
 
+        int k;
+        MPI_Recv(&k, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
 
-        MPI_Recv(k, 1, MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD, &status);
+        std::cout << "Testing k " << k << std::endl;
 
-        std::cout<<"Testing k "<<k<<std::endl;
-        
         double start = omp_get_wtime();
+        CrossValidation crossValidation = CrossValidation::NFold(std::vector<TSample>(train.begin(), train.begin() + 20000), 5);
         double accuracy = crossValidation.validate(k);
-        std::cout<<"K: "<<k<<" Accuracy: "<<accuracy * 100<<"% completed in "<<omp_get_wtime() - start<<" seconds"<<std::endl;
+        std::cout << "K: " << k << " Accuracy: " << accuracy * 100 << "% completed in " << omp_get_wtime() - start << " seconds" << std::endl;
 
-        MPI_Send(&accuracy, 1, MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD);
-
+        MPI_Send(&accuracy, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
     }
 }
