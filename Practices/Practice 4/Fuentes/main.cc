@@ -126,7 +126,7 @@ int main(int argc, char **argv)
 
         // Fine tune the KNN classifier with training data.
         double start = omp_get_wtime();
-        int k = fineTuning(0, 3, std::vector<TSample>(train.begin(), train.begin() + 20000), 5, status);
+        int k = fineTuning(0, 11, std::vector<TSample>(train.begin(), train.begin() + 20000), 5, status);
         std::cout << "Best k: " << k << " found in " << omp_get_wtime() - start << " seconds" << std::endl;
 
         // Test the classifier with testing data.
@@ -142,6 +142,7 @@ int main(int argc, char **argv)
 
         std::cout << "Total elapsed time " << parallel_time << " seconds" << std::endl;
 
+        MPI_Finalize();
         return 1;
     }
     else
